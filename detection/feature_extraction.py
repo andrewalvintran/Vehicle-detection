@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 from skimage.feature import hog
 
@@ -30,3 +31,31 @@ def color_hist(img, nbins=32, bins_range=(0, 256)):
     hist_features = np.concatenate((channel1_hist[0], channel2_hist[0], channel3_hist[0]))
 
     return hist_features
+
+
+def bin_spatial(img, size=(32, 32)):
+    """Computes binned color features"""
+    features = cv2.resize(img, size).ravel()
+    return features
+
+
+def extract_features(imgs, cspace='RGB', spatial_size=(32, 32), hist_bins=32, hist_range=(0, 256)):
+    """Given a list of images, get the spatial and histogram features, scale them
+    and return as a single feature vector
+    """
+    features = []
+
+    color_conversion = {"HSV": cv2.COLOR_RGB2HSV,
+                      "HLS": cv2.COLOR_RGB2HLS,
+                      "YUV": cv2.COLOR_RGB2YUV,
+                      "LUV": cv2.COLOR_RGB2LUV}
+    for img in imgs:
+        if cspace != 'RGB':
+            feature_image = cv2.cvtColor(img, color_conversion[cspace])
+        else:
+            feature_image = np.copy(img)
+
+        spatial_features = bin_spatial(feature_image, size=spatial_size)
+        hist_features = color_hist(feature_image, nbins=hist_bins, bins_range=hist_range)
+        features.append(np.concatenate((spatial_features, hist_features)))
+    return features
