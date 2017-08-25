@@ -50,20 +50,18 @@ def main():
     notcars = list(non_vehicle_imgs)
 
     car_features = fe.extract_features(cars, cspace='RGB', spatial_size=(32, 32),
-                                    hist_bins=32, hist_range=(0, 256))
+                                    hist_bins=32, hist_range=(0, 256), hog_feat=False)
     notcar_features = fe.extract_features(notcars, cspace='RGB', spatial_size=(32, 32),
-                                       hist_bins=32, hist_range=(0, 256))
+                                       hist_bins=32, hist_range=(0, 256), hog_feat=False)
 
     data = process_data_for_train(car_features, notcar_features)
     clf = create_model(data)
 
-    car_features_hog = fe.extract_hog_features(cars, cspace='RGB', orient=9, pix_per_cell=8,
-                                               cell_per_block=2, hog_channel='ALL')
-    notcar_features_hog = fe.extract_hog_features(notcars, cspace='RGB', orient=9, pix_per_cell=8,
-                                                  cell_per_block=2, hog_channel='ALL')
+    car_features = fe.extract_features(cars, hog_channel='ALL')
+    notcar_features= fe.extract_features(notcars, hog_channel='ALL')
 
-    data_hog = process_data_for_train(car_features_hog, notcar_features_hog)
-    clf_hog = create_model(data_hog)
+    data_hog = process_data_for_train(car_features, notcar_features)
+    clf_all_features = create_model(data_hog)
 
 
 if __name__ == "__main__":
