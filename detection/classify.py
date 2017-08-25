@@ -57,18 +57,16 @@ def main():
     non_vehicle_imgs = utils.get_images(non_vehicle_dir)
     notcars = list(non_vehicle_imgs)
 
-    spatial_size = (32, 32)
-    hist_bins = 32
-    hog_channel = 'ALL'
+    feature_options = {"spatial_size": (32, 32),
+                       "hist_bins": 32,
+                       "hog_channel": "ALL"}
 
     if os.path.exists(CLF_PATH):
         clf = joblib.load(CLF_PATH)
         scaler = joblib.load(SCALER_PATH)
     else:
-        car_features = fe.extract_features(cars, hog_channel=hog_channel, spatial_size=spatial_size,
-                                           hist_bins=hist_bins)
-        notcar_features = fe.extract_features(notcars, hog_channel=hog_channel, spatial_size=spatial_size,
-                                              hist_bins=hist_bins)
+        car_features = fe.extract_features(cars, **feature_options)
+        notcar_features = fe.extract_features(notcars, **feature_options)
 
         scaler, data = process_data_for_train(car_features, notcar_features)
         clf = create_model(data)
@@ -77,8 +75,7 @@ def main():
     test_image = test_images[0]
     windows = utils.slide_windows(test_image, xy_window=(96, 96), y_start=350)
 
-    hot_windows = utils.search_windows(test_image, windows, clf, scaler,
-                                       spatial_size=spatial_size, hist_bins=hist_bins, hog_channel=hog_channel)
+    hot_windows = utils.search_windows(test_image, windows, clf, scaler, **feature_options)
 
     draw_image = np.copy(test_image)
     window_img = utils.draw_boxes(draw_image, hot_windows)
