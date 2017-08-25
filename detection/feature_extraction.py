@@ -3,6 +3,12 @@ import numpy as np
 from skimage.feature import hog
 
 
+COLOR_CONVERSION = {"HSV": cv2.COLOR_RGB2HSV,
+                    "HLS": cv2.COLOR_RGB2HLS,
+                    "YUV": cv2.COLOR_RGB2YUV,
+                    "LUV": cv2.COLOR_RGB2LUV}
+
+
 def get_hog_features(img, orient, pix_per_cell, cell_per_block,
                      vis=False, feature_vec=True):
     hog_args = {"orientations": orient,
@@ -45,17 +51,39 @@ def extract_features(imgs, cspace='RGB', spatial_size=(32, 32), hist_bins=32, hi
     """
     features = []
 
-    color_conversion = {"HSV": cv2.COLOR_RGB2HSV,
-                      "HLS": cv2.COLOR_RGB2HLS,
-                      "YUV": cv2.COLOR_RGB2YUV,
-                      "LUV": cv2.COLOR_RGB2LUV}
     for img in imgs:
         if cspace != 'RGB':
-            feature_image = cv2.cvtColor(img, color_conversion[cspace])
+            feature_image = cv2.cvtColor(img, COLOR_CONVERSION[cspace])
         else:
             feature_image = np.copy(img)
 
         spatial_features = bin_spatial(feature_image, size=spatial_size)
         hist_features = color_hist(feature_image, nbins=hist_bins, bins_range=hist_range)
         features.append(np.concatenate((spatial_features, hist_features)))
+    return features
+
+
+def extract_hog_features(imgs, cspace='RGB', orient=9, pix_per_cell=8, cell_per_block=2, hog_channel=0):
+    features = []
+
+    for img in imgs:
+        if cspace != 'RGB':
+            feature_image = cv2.cvtColor(img, COLOR_CONVERSION[cspace])
+        else:
+            feature_image = np.copy(img)
+
+        if hog_channel == 'ALL':
+            hog_features = []
+            for channel in range(feature_image.shape[2]):
+                hog_features.append(get_hog_features(feature_image[:,:,channel], orient,
+                                    pix_per_cell, cell_per_block,
+                                    vis=False, feature_vec=True))
+
+            hog_features = np.ravel(hog_features)
+        else:
+            hog_features = get_hog_features(feature_image[:,:,hog_channel], orient,
+                                               pix_per_cell, cell_per_block,
+                                               vis=False, feature_vec=True)
+        features.append(hog_features)
+
     return features

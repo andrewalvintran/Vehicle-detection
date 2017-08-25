@@ -1,4 +1,5 @@
 import numpy as np
+import time
 from sklearn.svm import LinearSVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
@@ -9,9 +10,13 @@ from detection import feature_extraction as fe
 def create_model(data):
     x_train, y_train = data["train"]
     x_test, y_test = data["test"]
+
+    t = time.time()
     svc = LinearSVC()
     svc.fit(x_train, y_train)
+    t2 = time.time()
 
+    print(round(t2 - t, 2), 'seconds to train SVC...')
     print("Test accuracy of SVC = ", svc.score(x_test, y_test))
     return svc
 
@@ -42,14 +47,23 @@ def main():
     cars = list(vehicle_imgs)
     non_vehicle_dir = '../data/non-vehicles/*/'
     non_vehicle_imgs = utils.get_images(non_vehicle_dir)
+    notcars = list(non_vehicle_imgs)
 
     car_features = fe.extract_features(cars, cspace='RGB', spatial_size=(32, 32),
                                     hist_bins=32, hist_range=(0, 256))
-    notcar_features = fe.extract_features(non_vehicle_imgs, cspace='RGB', spatial_size=(32, 32),
+    notcar_features = fe.extract_features(notcars, cspace='RGB', spatial_size=(32, 32),
                                        hist_bins=32, hist_range=(0, 256))
 
     data = process_data_for_train(car_features, notcar_features)
     clf = create_model(data)
+
+    car_features_hog = fe.extract_hog_features(cars, cspace='RGB', orient=9, pix_per_cell=8,
+                                               cell_per_block=2, hog_channel='ALL')
+    notcar_features_hog = fe.extract_hog_features(notcars, cspace='RGB', orient=9, pix_per_cell=8,
+                                                  cell_per_block=2, hog_channel='ALL')
+
+    data_hog = process_data_for_train(car_features_hog, notcar_features_hog)
+    clf_hog = create_model(data_hog)
 
 
 if __name__ == "__main__":
