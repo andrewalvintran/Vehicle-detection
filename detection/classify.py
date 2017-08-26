@@ -59,7 +59,8 @@ def main():
 
     feature_options = {"spatial_size": (32, 32),
                        "hist_bins": 32,
-                       "hog_channel": "ALL"}
+                       "hog_channel": "ALL",
+                       "c_space": "RGB"}
 
     if os.path.exists(CLF_PATH):
         clf = joblib.load(CLF_PATH)
@@ -82,6 +83,11 @@ def main():
 
     from matplotlib import pyplot as plt
     plt.imshow(window_img)
+    plt.show()
+
+    out_img = fe.find_cars(test_image, clf, scaler, y_start=400, y_stop=656, scale=1.5)
+
+    plt.imshow(out_img)
     plt.show()
 
 

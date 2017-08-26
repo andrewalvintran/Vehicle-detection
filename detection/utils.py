@@ -66,7 +66,7 @@ def slide_windows(img, *, x_start=None, x_stop=None, y_start=None, y_stop=None,
     return window_list
 
 
-def search_windows(img, windows, clf, scaler, *, color_space='RGB',
+def search_windows(img, windows, clf, scaler, *, c_space='RGB',
                    spatial_size=(32, 32), hist_bins=32, hist_range=(0, 256),
                    orient=9, pix_per_cell=8, cell_per_block=2, hog_channel=0,
                    spatial_feat=True, hist_feat=True, hog_feat=True):
@@ -81,7 +81,7 @@ def search_windows(img, windows, clf, scaler, *, color_space='RGB',
         test_img = cv2.resize(img[window[0][1]:window[1][1], window[0][0]:window[1][0]], (64, 64))
 
         features = fe.extract_features(
-                            [test_img], cspace=color_space,
+                            [test_img], cspace=c_space,
                             spatial_size=spatial_size, hist_bins=hist_bins,
                             hist_range=hist_range,
                             orient=orient, pix_per_cell=pix_per_cell,
