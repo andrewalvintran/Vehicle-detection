@@ -1,7 +1,14 @@
 import cv2
 import glob
 import numpy as np
+from moviepy.editor import VideoFileClip
+from sklearn.externals import joblib
+from scipy.ndimage.measurements import label
 from detection import feature_extraction as fe
+
+
+CLF = joblib.load("../data/svm_model.pkl")
+SCALER = joblib.load("../data/scaler.pkl")
 
 
 def get_images(dir, type='png'):
@@ -81,7 +88,7 @@ def search_windows(img, windows, clf, scaler, *, c_space='RGB',
         test_img = cv2.resize(img[window[0][1]:window[1][1], window[0][0]:window[1][0]], (64, 64))
 
         features = fe.extract_features(
-                            [test_img], cspace=c_space,
+                            [test_img], c_space=c_space,
                             spatial_size=spatial_size, hist_bins=hist_bins,
                             hist_range=hist_range,
                             orient=orient, pix_per_cell=pix_per_cell,
@@ -95,6 +102,66 @@ def search_windows(img, windows, clf, scaler, *, c_space='RGB',
             on_windows.append(window)
 
     return on_windows
+
+
+def add_heat(heatmap, bbox_list):
+    for box in bbox_list:
+        heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += 1
+
+    return heatmap
+
+
+def apply_threshold(heatmap, threshold=0):
+    # Zero out pixels below the threshold
+    heatmap[heatmap <= threshold] = 0
+    # Return thresholded map
+    return label(heatmap), heatmap
+
+
+def draw_labeled_boxes(img, labels):
+    for car_num in range(1, labels[1]+1):
+        # Find pixels with each car_num label value
+        nonzero = (labels[0] == car_num).nonzero()
+
+        # Identify x and y values of those pixels
+        non_zero_y = np.array(nonzero[0])
+        non_zero_x = np.array(nonzero[1])
+
+        bbox = ((np.min(non_zero_x), np.min(non_zero_y)), (np.max(non_zero_x), np.max(non_zero_y)))
+        cv2.rectangle(img, bbox[0], bbox[1], (0, 0, 255), 6)
+
+    return img
+
+
+from detection import WindowTracker
+WINDOW_TRACKER = WindowTracker.WindowTracker(list(get_images("../data/test_images", 'jpg'))[0], 5)
+
+
+def process_image(image):
+    global WINDOW_TRACKER
+
+    # Modify scale values and start stop ranges to search with different windows
+    scales = [1.5]
+    start_stop_ranges = [(400, 650)]
+    total_windows_list = []
+    for scale, ranges in zip(scales, start_stop_ranges):
+        out_img, windows_list = fe.find_cars(image, CLF, SCALER, y_start=ranges[0], y_stop=ranges[1],
+                                             scale=scale, c_space='YCrCb', cells_per_step=1)
+        total_windows_list.extend(windows_list)
+
+    WINDOW_TRACKER.add_windows(total_windows_list)
+
+    labels, heat_map = WINDOW_TRACKER.get_windows()
+    draw_img = draw_labeled_boxes(np.copy(image), labels)
+    return draw_img
+
+
+def generate_processed_video(video):
+    video_output = "../project_output.mp4"
+    video_input = VideoFileClip(video)
+
+    processed_video = video_input.fl_image(process_image)
+    processed_video.write_videofile(video_output, audio=False)
 
 
 if __name__ == "__main__":

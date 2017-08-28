@@ -46,7 +46,7 @@ def bin_spatial(img, size=(32, 32)):
     return features
 
 
-def extract_features(imgs, *, cspace='RGB', spatial_size=(32, 32), hist_bins=32, hist_range=(0, 256),
+def extract_features(imgs, *, c_space='RGB', spatial_size=(32, 32), hist_bins=32, hist_range=(0, 256),
                      orient=9, pix_per_cell=8, cell_per_block=2, hog_channel=0, spatial_feat=True,
                      hist_feat=True, hog_feat=True):
     """Given a list of images, get the features (spatial, hist, and hog), scale them
@@ -56,8 +56,8 @@ def extract_features(imgs, *, cspace='RGB', spatial_size=(32, 32), hist_bins=32,
 
     for img in imgs:
         img_features = []
-        if cspace != 'RGB':
-            feature_image = cv2.cvtColor(img, COLOR_CONVERSION[cspace])
+        if c_space != 'RGB':
+            feature_image = cv2.cvtColor(img, COLOR_CONVERSION[c_space])
         else:
             feature_image = np.copy(img)
 
@@ -88,14 +88,16 @@ def extract_features(imgs, *, cspace='RGB', spatial_size=(32, 32), hist_bins=32,
     return features
 
 
-def find_cars(img, clf, x_scaler, *, orient=9, y_start=None, y_stop=None, scale=1,
-              pix_per_cell=8, cell_per_block=2, spatial_size=(32, 32), hist_bins=32):
+def find_cars(img, clf, x_scaler, *, c_space='RGB', orient=9, y_start=None, y_stop=None, scale=1,
+              pix_per_cell=8, cell_per_block=2, cells_per_step=2, spatial_size=(32, 32), hist_bins=32):
     """Searches for cars within a specific window
     This extracts hog features once and sub samples the hog features for a given frame
     """
     draw_img = np.copy(img)
 
     img_tosearch = img[y_start:y_stop,:,:]
+    if c_space != 'RGB':
+        img_tosearch = cv2.cvtColor(img_tosearch, COLOR_CONVERSION[c_space])
 
     if scale != 1:
         imgshape = img_tosearch.shape
@@ -110,13 +112,14 @@ def find_cars(img, clf, x_scaler, *, orient=9, y_start=None, y_stop=None, scale=
     # 64 was the original sampling rate, with 8 cells and 8 pix per cell
     window = 64
     nblocks_per_window = (window // pix_per_cell) - cell_per_block + 1
-    cells_per_step = 2
     nx_steps = (nx_blocks - nblocks_per_window) // cells_per_step
     ny_steps = (ny_blocks - nblocks_per_window) // cells_per_step
 
     hog_channels = [get_hog_features(channel, orient, pix_per_cell, cell_per_block, feature_vec=False)
                     for channel in channels]
     hog1, hog2, hog3 = hog_channels
+
+    windows_list = []
 
     for xb in range(nx_steps):
         for yb in range(ny_steps):
@@ -149,7 +152,16 @@ def find_cars(img, clf, x_scaler, *, orient=9, y_start=None, y_stop=None, scale=
                 x_box_left = np.int(x_left*scale)
                 y_top_draw = np.int(y_top*scale)
                 win_draw = np.int(window*scale)
-                cv2.rectangle(draw_img, (x_box_left, y_top_draw+y_start),
-                              (x_box_left+win_draw, y_top_draw+win_draw+y_start), (0,0,255),6)
 
-    return draw_img
+                start_x = x_box_left
+                start_y = y_top_draw + y_start
+                end_x = start_x + win_draw
+                end_y = start_y + win_draw
+
+                start = (start_x, start_y)
+                end = (end_x, end_y)
+
+                windows_list.append((start, end))
+                cv2.rectangle(draw_img, start, end, (0,0,255),6)
+
+    return draw_img, windows_list

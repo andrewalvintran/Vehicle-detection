@@ -60,7 +60,7 @@ def main():
     feature_options = {"spatial_size": (32, 32),
                        "hist_bins": 32,
                        "hog_channel": "ALL",
-                       "c_space": "RGB"}
+                       "c_space": "YCrCb"}
 
     if os.path.exists(CLF_PATH):
         clf = joblib.load(CLF_PATH)
@@ -72,23 +72,8 @@ def main():
         scaler, data = process_data_for_train(car_features, notcar_features)
         clf = create_model(data)
 
-    test_images = list(utils.get_images("../data/test_images", type='jpg'))
-    test_image = test_images[0]
-    windows = utils.slide_windows(test_image, xy_window=(96, 96), y_start=350)
-
-    hot_windows = utils.search_windows(test_image, windows, clf, scaler, **feature_options)
-
-    draw_image = np.copy(test_image)
-    window_img = utils.draw_boxes(draw_image, hot_windows)
-
-    from matplotlib import pyplot as plt
-    plt.imshow(window_img)
-    plt.show()
-
-    out_img = fe.find_cars(test_image, clf, scaler, y_start=400, y_stop=656, scale=1.5)
-
-    plt.imshow(out_img)
-    plt.show()
+    video = "../project_video.mp4"
+    utils.generate_processed_video(video)
 
 
 if __name__ == "__main__":
