@@ -12,13 +12,7 @@ The goals / steps of this project are the following:
 * Estimate a bounding box for vehicles detected.
 
 [//]: # (Image References)
-[image1]: ./examples/car_not_car.png
 [image2]: ./examples/HOG_example.jpg
-[image3]: ./examples/sliding_windows.jpg
-[image4]: ./examples/sliding_window.jpg
-[image5]: ./examples/bboxes_and_heat.png
-[image6]: ./examples/labels_map.png
-[image7]: ./examples/output_bboxes.png
 [video1]: ./project_video.mp4
 
 [car_img]: ./examples/car_img.png
@@ -56,7 +50,7 @@ The goals / steps of this project are the following:
 
 ---
 
-####1. Explain how (and identify where in your code) you extracted HOG features from the training images.
+#### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
 The code for this step is contained in feature_extraction.py in the function `get_hog_features` on line 13.
 
@@ -71,13 +65,13 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 
 ![alt text][image2]
 
-####2. Explain how you settled on your final choice of HOG parameters.
+#### 2. Explain how you settled on your final choice of HOG parameters.
 
 I used the parameters that were given in the lectures.  These parameters worked well so I never changed them.
 These arguments were `orient = 9`, `pixels_per_cell = 8`, `cell_per_block = 2`.  I did however decide to use all 
 the color channels and I used the `YCrCb` color space since it outperformed the other color spaces when classifying with 
 a linear svm.
-####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
+#### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
 I trained a linear SVM using the HOG features and color features.  This can be seen in `classify.py`.  The main function
 `extract_features` in `feature_extraction.py` extracts the color and HOG features for each image.  The features
@@ -89,9 +83,9 @@ The HOG and color feature functions can be found in `feature_extraction.py`.  Th
 extract features that are concatenated into one large array.  This is then normalized and fed to the classifier to obtain a result
 of 0 or 1, where 1 corresponds to a vehicle.
 
-###Sliding Window Search
+### Sliding Window Search
 
-####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
+#### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
 In `feature_extraction.py` the function `find_cars` uses a efficient method for doing the sliding window approach.
 Here I extract the HOG features once and I sub-sample the results to get the overlaying windows.  I tried out different scale results 
@@ -111,7 +105,7 @@ Here are some images of different scale results with `cells_per_step = 1`
 ![][1.5]  |  ![][2.0]
 
 
-####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
+#### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
 Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color 
 in the feature vector, which provided a nice result.  
@@ -131,11 +125,11 @@ Here are some example images:
 
 ### Video Implementation
 
-####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
+#### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
 Here's a [link to my video result](./project_output.mp4)
 
 
-####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
+#### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
 I recorded the positions of positive detections in each frame of the video.
 From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.
@@ -151,22 +145,22 @@ The left most frame contains the results from the `find_cars` function.  The mid
 n frames from the queue that keeps track of previous frames, and the last frame is the end result after applying
 `label()` to the heat map.
 
-![][proc-1-org] ![][proc-1-heat] ![][proc-1-res]
+![][proc-1-org]![][proc-1-heat]![][proc-1-res]
 
-![][proc-2-org] ![][proc-2-heat] ![][proc-2-res]
+![][proc-2-org]![][proc-2-heat]![][proc-2-res]
 
-![][proc-3-org] ![][proc-3-heat] ![][proc-3-res]
+![][proc-3-org]![][proc-3-heat]![][proc-3-res]
 
-![][proc-4-org] ![][proc-4-heat] ![][proc-4-res]
+![][proc-4-org]![][proc-4-heat]![][proc-4-res]
 
-![][proc-5-org] ![][proc-5-heat] ![][proc-5-res]
+![][proc-5-org]![][proc-5-heat]![][proc-5-res]
 
 
 ---
 
-###Discussion
+### Discussion
 
-####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 If the car is all the way in the far left lane, then the classifier picks up vehicles from cars in the 
 opposite direction.  This might not be wanted on the highway, but it could be of use in avoiding incoming vehicles 
